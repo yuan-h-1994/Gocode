@@ -1,29 +1,36 @@
+/*This is a training code for learning Go language.
+And this code can change the format of images as you like*/
 package main
 
 import (
-	"image"
-	_ "image/jpeg"
-	"image/png"
+	"bufio"
+	"convert"
+	"fmt"
 	"os"
+	"strings"
 )
 
-func main() {
-	file, err := os.Open("/home/vagrant/share/up/GOcode/1.jpg")
-	assert(err, "Invalid image file path ")
-	defer file.Close()
-
-	img, _, err := image.Decode(file)
-	assert(err, "Failed to convert file to image.")
-
-	out, err := os.Create("/home/vagrant/share/up/GOcode/png/1.png")
-	assert(err, "Failed to create output path.")
-	defer out.Close()
-
-	png.Encode(out, img)
+type oriPath struct {
+	inputPA  string
+	outputPA string
 }
 
-func assert(err error, msg string) {
-	if err != nil {
-		panic(err.Error() + ":" + msg)
+func main() {
+	var a oriPath
+	a.inputPA = "./img"
+	a.outputPA = "./img"
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print("Input the image format you want(like png or gif):")
+	if !scanner.Scan() {
+		fmt.Println("Please input the format.")
+		return
+	}
+	srcPath := scanner.Text()
+
+	var s []string
+	s, _ = convert.GetAllFile(a.inputPA, s)
+	for _, i := range s {
+		j := strings.Replace(i, "jpg", srcPath, -1) //jpgから任意の形式へ変換する
+		convert.Conv(i, j)
 	}
 }
