@@ -35,28 +35,41 @@ func GetAllFile(pathname string, ipt []string) ([]string, error) {
 }
 
 //画像の形式を変換する
-func Conv(ipt, opt string) {
+func Conv(ipt, opt string) (s string, err error) {
+	s1 := "right"
 	file, err := os.Open(ipt)
-	assert(err, "Invalid image file path ")
+	if err != nil {
+		return s1, err
+	}
+	//assert(err, "Invalid image file path ")
 	defer file.Close()
 
 	img, _, err := image.Decode(file)
-	assert(err, "Failed to convert file to image.")
+	if err != nil {
+		return s1, err
+	}
+	//assert(err, "Failed to convert file to image.")
 
 	out, err := os.Create(opt)
-	assert(err, "Failed to create output path.")
+	if err != nil {
+		return s1, err
+	}
 	defer out.Close()
 
 	switch filepath.Ext(opt) {
 	case ".png":
-		png.Encode(out, img)
+		err = png.Encode(out, img)
 	case ".gif":
-		gif.Encode(out, img, nil)
+		err = gif.Encode(out, img, nil)
 	}
+	if err != nil {
+		return s1, err
+	}
+	return s1, nil
 }
 
-func assert(err error, msg string) {
-	if err != nil {
-		panic(err.Error() + ":" + msg)
-	}
-}
+//func assert(err error, msg string) {
+//	if err != nil {
+//		panic(err.Error() + ":" + msg)
+//	}
+//}

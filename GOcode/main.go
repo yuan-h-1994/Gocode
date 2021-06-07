@@ -31,6 +31,9 @@ func main() {
 	s, _ = convert.GetAllFile(a.inputPA, s)
 	for _, i := range s {
 		j := strings.Replace(i, "jpg", srcPath, -1) //jpgから任意の形式へ変換する
-		convert.Conv(i, j)
+		err := convert.Conv(i, j)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		}
 	}
 }
