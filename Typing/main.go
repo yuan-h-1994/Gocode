@@ -2,58 +2,61 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
-	"strings"
-	//"time"
+	"time"
 )
 
-func main() {
-	fmt.Println("タイピングゲームが始まった！頑張って！")
-	var num int
-	for i := 0; i < 5; i++ {
-		word := randomWord()
-		fmt.Println("以下の英単語をタイピングしてください：", word)
-		right := compare(word)
-		num = num + right
-	}
-	fmt.Println("ゲーム終了！　正確単語数：", num)
+var t int
+
+//制限時間をオプションにする
+func init() {
+	flag.IntVar(&t, "t", 20, "制限時間s")
+	flag.Parse()
 }
 
-//単語を比較して、スコアを計算する
-func compare(word string) (right int) {
-	score := 0
-	num := 0
-	inputword := imp()
-	if len(inputword) == len(word) {
-		for i := 0; i < len(inputword); i++ {
-			wd1 := inputword[i]
-			wd2 := word[i]
-			if wd1 == wd2 {
-				num++
+func main() {
+	fmt.Println("タイピングゲームが始まった！制限時間", t, "s")
+	num, score := 0, 0
+	timeout := time.After(time.Second * time.Duration(t))
+	for sign := true; sign == true; {
+		word := RandomWord()
+		num++
+		fmt.Println("単語NO:", num, "この英単語をタイピングしてください：", word)
+		c := imp(os.Stdin)
+		select {
+		case right := <-c:
+			if right == word {
+				fmt.Println("正解です！")
+				score++
+			} else {
+				fmt.Println("残念、不正解です。")
 			}
+		case <-timeout:
+			fmt.Println("時間です！")
+			sign = false
 		}
 	}
-	if num == len(word) {
-		score = score + 1
-	}
-	right = score
-	return right
+	fmt.Println("ゲーム終了！ やった単語数", num, " 時間内に正確単語数：", score)
 }
 
 //英単語をランダムに取り出す
-func randomWord() (word string) {
+func RandomWord() (word string) {
 	words := []string{"banana", "apple", "milk", "fruits", "cat", "car", "elephant", "unbralla", "interface", "tissues", "format"}
-	num := rand.Intn(10)
+	rand.Seed(time.Now().Unix())
+	num := rand.Intn(len(words))
 	return words[num]
 }
 
 //入力単語を取得する
-func imp() (stringInput string) {
-	scanner := bufio.NewScanner(os.Stdin)
+func imp(r io.Reader) <-chan string {
+	wordCh := make(chan string, 1)
+	scanner := bufio.NewScanner(r)
 	scanner.Scan()
-	stringInput = scanner.Text()
-	stringInput = strings.TrimSpace(stringInput)
-	return stringInput
+	wordCh <- scanner.Text()
+	//close(wordCh)
+	return wordCh
 }
