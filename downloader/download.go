@@ -8,32 +8,69 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 const size = 4 //分割の数
 
-var url = "https://www.robots.ox.ac.uk/~vgg/data/paintings/painting_dataset_2021.csv"
-var fileph = "./painting_dataset_2021.csv"
+var url = "https://www.robots.ox.ac.uk/~vgg/data/vgg_face/vgg_face_dataset.tar.gz"
+var fileph = "./vgg_face_dataset.tar.gz"
 var muex sync.Mutex
 var wg = sync.WaitGroup{}
 
 func main() {
 	fmt.Println("ダウンロードスタート...")
+	datetime := time.Now()
+	fmt.Println(datetime)
 	filelen := Getfilelen()
 	fmt.Println("ファイルサイズ：", calculatelen(filelen))
+	//sigChan := make(chan os.Signal)
+	//signal.Notify(sigChan)
+	//ctx, cancel := context.WithCancel(context.Background())
 	file, err := os.Create(fileph)
 	if err != nil {
 		panic(err)
 	}
 	part := filelen/size + 1 //startとendを指定する
 	wg.Add(size)
-	//downloadを繰り返す
-	for i := 0; i < size; i++ {
-		go Download(url, file, filelen, i, part)
-	}
+	go func() {
+		i := 1
+		Download(url, file, filelen, i, part)
+		fmt.Println("channel 1 over")
+		wg.Done()
+	}()
+	go func() {
+		i := 2
+		Download(url, file, filelen, i, part)
+		fmt.Println("channel 2 over")
+		wg.Done()
+	}()
+	go func() {
+		i := 3
+		Download(url, file, filelen, i, part)
+		fmt.Println("channel 3 over")
+		wg.Done()
+	}()
+	go func() {
+		i := 4
+		Download(url, file, filelen, i, part)
+		fmt.Println("channel 4 over")
+		wg.Done()
+	}()
+	/*select {
+	case sig := <-sigChan:
+		defer file.Close()
+		wg.Wait()
+		os.Remove(fileph)
+		fmt.Println("ダウンロード停止", sig)
+	default:*/
+	//cancel()
 	defer file.Close()
 	wg.Wait()
 	fmt.Println("ダウンロード終了。")
+	datetime2 := time.Now()
+	fmt.Println(datetime2)
+	//}
 }
 
 //ダウンロード機能
@@ -74,8 +111,6 @@ func Download(url string, file *os.File, filelen int, i int, part int) {
 	if len(body) == 0 {
 		fmt.Println("no file")
 	}
-
-	wg.Done()
 	len, err := file.Write(body)
 	fmt.Println(strconv.Itoa(i)+"番目のファイルを書き込み、長さ：", len)
 	resp.Body.Close()
